@@ -23,6 +23,7 @@ Ember.EasyForm.Config = Ember.Namespace.create({
       formClass: '',
       fieldErrorClass: 'fieldWithErrors',
       inputClass: 'input',
+      inputElementClass: '',
       errorClass: 'error',
       hintClass: 'hint',
       labelClass: '',
@@ -46,6 +47,47 @@ Ember.EasyForm.Config = Ember.Namespace.create({
     return this._inputTypes[name];
   }
 });
+
+})();
+
+
+
+(function() {
+Ember.EasyForm.WrapperConfigMixin = Ember.Mixin.create({
+  getWrapperConfig: function(configName) {
+    var wrapper = Ember.EasyForm.Config.getWrapper(this.get('wrapper'));
+    return wrapper[configName];
+  },
+  wrapper: Ember.computed(function() {
+    var wrapperView = this.nearestWithProperty('wrapper');
+    if (wrapperView) {
+      return wrapperView.get('wrapper');
+    } else {
+      return 'default';
+    }
+  })
+});
+
+})();
+
+
+
+(function() {
+Ember.EasyForm.InputElementClassMixin = Ember.Mixin.create(Ember.EasyForm.WrapperConfigMixin, {
+  init: function() {
+    var cls = this.getWrapperConfig('inputElementClass');
+    this._super();
+    if (!Ember.isEmpty(cls)) {
+      this.classNames.push(cls);
+    }
+  },
+});
+
+})();
+
+
+
+(function() {
 
 })();
 
@@ -233,26 +275,14 @@ Ember.Handlebars.registerHelper('submit', function(value, options) {
 
 
 (function() {
-Ember.EasyForm.BaseView = Ember.View.extend({
-  getWrapperConfig: function(configName) {
-    var wrapper = Ember.EasyForm.Config.getWrapper(this.get('wrapper'));
-    return wrapper[configName];
-  },
-  wrapper: Ember.computed(function() {
-    var wrapperView = this.nearestWithProperty('wrapper');
-    if (wrapperView) {
-      return wrapperView.get('wrapper');
-    } else {
-      return 'default';
-    }
-  })
-});
+Ember.EasyForm.BaseView = Ember.View.extend(Ember.EasyForm.WrapperConfigMixin);
+
 })();
 
 
 
 (function() {
-Ember.EasyForm.Checkbox = Ember.Checkbox.extend();
+Ember.EasyForm.Checkbox = Ember.Checkbox.extend(Ember.EasyForm.InputElementClassMixin);
 
 })();
 
@@ -442,7 +472,7 @@ Ember.EasyForm.Label = Ember.EasyForm.BaseView.extend({
 
 
 (function() {
-Ember.EasyForm.Select = Ember.Select.extend();
+Ember.EasyForm.Select = Ember.Select.extend(Ember.EasyForm.InputElementClassMixin);
 
 })();
 
@@ -496,14 +526,14 @@ helpers = this.merge(helpers, Ember.Handlebars.helpers); data = data || {};
 
 
 (function() {
-Ember.EasyForm.TextArea = Ember.TextArea.extend();
+Ember.EasyForm.TextArea = Ember.TextArea.extend(Ember.EasyForm.InputElementClassMixin);
 
 })();
 
 
 
 (function() {
-Ember.EasyForm.TextField = Ember.TextField.extend();
+Ember.EasyForm.TextField = Ember.TextField.extend(Ember.EasyForm.InputElementClassMixin);
 
 })();
 
