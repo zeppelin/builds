@@ -1,6 +1,6 @@
 (function() {
 Ember.Validations = Ember.Namespace.create({
-  VERSION: '1.0.0.beta.1'
+  VERSION: '1.0.0.beta.2'
 });
 
 })();
@@ -10,12 +10,16 @@ Ember.Validations = Ember.Namespace.create({
 (function() {
 Ember.Validations.messages = {
   render: function(attribute, context) {
-    var regex = new RegExp("{{(.*?)}}"),
-        attributeName = "";
-    if (regex.test(this.defaults[attribute])) {
-      attributeName = regex.exec(this.defaults[attribute])[1];
+    if (Ember.I18n) {
+      return Ember.I18n.t('errors.' + attribute, context);
+    } else {
+      var regex = new RegExp("{{(.*?)}}"),
+          attributeName = "";
+      if (regex.test(this.defaults[attribute])) {
+        attributeName = regex.exec(this.defaults[attribute])[1];
+      }
+      return this.defaults[attribute].replace(regex, context[attributeName]);
     }
-    return this.defaults[attribute].replace(regex, context[attributeName]);
   },
   defaults: {
     inclusion: "is not included in the list",
@@ -474,7 +478,13 @@ Ember.Validations.validators.local.Length = Ember.Validations.validators.Base.ex
       }
     }
 
-    this.tokenizedLength = new Function('value', 'return (value || "").' + (this.options.tokenizer || 'split("")') + '.length');
+    this.options.tokenizer = this.options.tokenizer || function(value) { return value.split(''); };
+    // if (typeof(this.options.tokenizer) === 'function') {
+      // debugger;
+      // // this.tokenizedLength = new Function('value', 'return '
+    // } else {
+      // this.tokenizedLength = new Function('value', 'return (value || "").' + (this.options.tokenizer || 'split("")') + '.length');
+    // }
   },
   CHECKS: {
     'is'      : '==',
@@ -528,7 +538,7 @@ Ember.Validations.validators.local.Length = Ember.Validations.validators.Base.ex
           continue;
         }
 
-        fn = new Function('return ' + this.tokenizedLength(this.model.get(this.property)) + ' ' + operator + ' ' + this.getValue(key));
+        fn = new Function('return ' + this.options.tokenizer(this.model.get(this.property)).length + ' ' + operator + ' ' + this.getValue(key));
         if (!fn()) {
           this.errors.pushObject(this.renderMessageFor(key));
         }
@@ -556,7 +566,8 @@ Ember.Validations.validators.local.Numericality = Ember.Validations.validators.B
       this.options[key] = true;
     }
 
-    if (this.options.messages === undefined) {
+    if (this.options.messages === undefined || this.options.messages.numericality === undefined) {
+      this.options.messages = this.options.messages || {};
       this.options.messages = { numericality: Ember.Validations.messages.render('notANumber', this.options) };
     }
 
@@ -741,32 +752,6 @@ Ember.Validations.validators.local.Url = Ember.Validations.validators.Base.exten
   }
 });
 
-
-})();
-
-
-
-(function() {
-
-})();
-
-
-
-(function() {
-Ember.ControllerMixin.reopen({
-  childControllers: Ember.A(),
-  setupAsChildController: function() {
-    if (this.parentController) {
-      this.parentController.childControllers.pushObject(this);
-      this.reopen({
-        willDestroy: function() {
-          this._super();
-          this.parentController.childControllers.removeObject(this);
-        }
-      });
-    }
-  }.on('init')
-});
 
 })();
 
